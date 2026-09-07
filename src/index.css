@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Cinzel', Georgia, serif;
+  --font-editorial: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  
+  --color-terracotta-400: #E07850;
+  --color-terracotta-500: #C85A32;
+  --color-terracotta-600: #B04722;
+  --color-terracotta-700: #8E3416;
+
+  --color-gold-400: #F3DC7D;
+  --color-gold-500: #D4AF37;
+  --color-gold-600: #AA8722;
+
+  --color-dark-base: #0a0a0a;
+  --color-dark-surface: #121212;
+  --color-dark-card: #171717;
+  --color-dark-border: #262626;
+
+  --color-cream-base: #FBF9F4;
+  --color-cream-surface: #F3ECE1;
+  --color-cream-card: #E8DECE;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}
+
+/* Utility font classes */
+.font-cinzel {
+  font-family: 'Cinzel', Georgia, serif;
+}
+.font-cormorant {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* Hide scrollbar for horizontal card scrollers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glass & Texture Accents - Elegant Dark */
+.glass-panel {
+  background: rgba(14, 14, 14, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.glass-panel-light {
+  background: rgba(251, 249, 244, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+/* Masked Image Reveal */
+@keyframes maskReveal {
+  0% {
+    clip-path: inset(0 0 100% 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.animate-mask-reveal {
+  animation: maskReveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Cinematic film grain overlay */
+.film-grain {
+  background-image: radial-gradient(rgba(212, 175, 55, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
