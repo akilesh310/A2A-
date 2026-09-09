@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { CustomCursor } from './components/CustomCursor';
 import { LoadingScreen } from './components/LoadingScreen';
 import { ScrollProgressBar } from './components/ScrollProgressBar';
@@ -16,11 +17,17 @@ import { ReservationModal } from './components/ReservationModal';
 import { OrderDrawer } from './components/OrderDrawer';
 import { FloatingCTA } from './components/FloatingCTA';
 import { Footer } from './components/Footer';
+import { AuthModal } from './components/AuthModal';
+import { OrdersModal } from './components/OrdersModal';
 import { CartItem, MenuItem } from './types';
+import { auth } from './firebase';
 
 export default function App() {
   const [isReservationOpen, setIsReservationOpen] = useState(false);
   const [isOrderDrawerOpen, setIsOrderDrawerOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem('a2a_cart');
@@ -38,6 +45,8 @@ export default function App() {
       console.warn('LocalStorage error:', e);
     }
   }, [cart]);
+
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
 
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -101,6 +110,9 @@ export default function App() {
         onOpenReservation={() => setIsReservationOpen(true)}
         onOpenOrder={() => setIsOrderDrawerOpen(true)}
         cartCount={totalCartCount}
+        user={user}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenOrders={() => setIsOrdersOpen(true)}
       />
 
       {/* Main Content Sections Flow */}
@@ -162,7 +174,11 @@ export default function App() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onClearCart={handleClearCart}
+        user={user}
+        onRequireAuth={() => setIsAuthOpen(true)}
       />
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <OrdersModal isOpen={isOrdersOpen} onClose={() => setIsOrdersOpen(false)} userId={user?.uid ?? null} />
     </div>
   );
 }

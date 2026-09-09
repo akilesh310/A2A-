@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { User } from 'firebase/auth';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Trash2, Plus, Minus, ShoppingBag, Send, CheckCircle, ArrowRight, Clock, MapPin, Sparkles } from 'lucide-react';
 import { CartItem } from '../types';
 import { RESTAURANT_INFO } from '../data/restaurantData';
+import { db } from '../firebase';
 
 interface OrderDrawerProps {
   isOpen: boolean;
@@ -11,6 +14,8 @@ interface OrderDrawerProps {
   onUpdateQuantity: (itemId: string, delta: number) => void;
   onRemoveItem: (itemId: string) => void;
   onClearCart: () => void;
+  user: User | null;
+  onRequireAuth: () => void;
 }
 
 export const OrderDrawer: React.FC<OrderDrawerProps> = ({
@@ -20,6 +25,8 @@ export const OrderDrawer: React.FC<OrderDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
+  user,
+  onRequireAuth,
 }) => {
   const [orderType, setOrderType] = useState<'dine-in' | 'takeaway' | 'delivery'>('dine-in');
   const [customerName, setCustomerName] = useState('');
@@ -28,14 +35,57 @@ export const OrderDrawer: React.FC<OrderDrawerProps> = ({
   const [notes, setNotes] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
+  const [isSaving, setIsSaving] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const subtotal = cart.reduce((acc, item) => acc + item.menuItem.price * item.quantity, 0);
   const gst = Math.round(subtotal * 0.05); // 5% GST
   const deliveryCharge = orderType === 'delivery' && subtotal > 0 ? 40 : 0;
   const total = subtotal + gst + deliveryCharge;
 
-  const handleWhatsAppOrder = () => {
+  const saveOrder = async () => {
+    if (!user) {
+      onRequireAuth();
+      return false;
+    }
+    setIsSaving(true);
+    setSubmitError('');
+    try {
+      const generatedOrderNumber = `A2A-${Date.now().toString().slice(-6)}`;
+      await addDoc(collection(db, 'users', user.uid, 'orders'), {
+        orderNumber: generatedOrderNumber,
+        userId: user.uid,
+        customer: { name: customerName || user.displayName || '', email: user.email || '', phone: customerPhone, address: orderType === 'delivery' ? customerAddress : '' },
+        orderType,
+        items: cart.map(({ menuItem, quantity, specialInstructions }) => ({ id: menuItem.id, name: menuItem.name, price: menuItem.price, quantity, specialInstructions: specialInstructions || '' })),
+        notes,
+        subtotal,
+        gst,
+        deliveryCharge,
+        total,
+        paymentMethod,
+        paymentStatus: paymentMethod === 'cash' ? 'Pay at counter / on delivery' : 'Payment pending',
+        status: 'Received',
+        createdAt: serverTimestamp(),
+      });
+      setOrderNumber(generatedOrderNumber);
+      setIsSubmitted(true);
+      return true;
+    } catch (error) {
+      console.error('Could not save order:', error);
+      setSubmitError('Your order could not be saved. Check Firestore setup and try again.');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleWhatsAppOrder = async () => {
     if (cart.length === 0) return;
+
+    const saved = await saveOrder();
+    if (!saved) return;
 
     let message = `*A2A RESTAURANT COIMBATORE - NEW ORDER*\n`;
     message += `Order Type: ${orderType.toUpperCase()}\n`;
@@ -57,18 +107,12 @@ export const OrderDrawer: React.FC<OrderDrawerProps> = ({
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/${RESTAURANT_INFO.whatsappNumber}?text=${encoded}`, '_blank');
 
-    const randomId = 'A2A-' + Math.floor(1000 + Math.random() * 9000);
-    setOrderNumber(randomId);
-    setIsSubmitted(true);
   };
 
-  const handleInstantCheckout = (e: React.FormEvent) => {
+  const handleInstantCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) return;
-
-    const randomId = 'A2A-' + Math.floor(1000 + Math.random() * 9000);
-    setOrderNumber(randomId);
-    setIsSubmitted(true);
+    await saveOrder();
   };
 
   const handleResetOrder = () => {
@@ -302,6 +346,13 @@ export const OrderDrawer: React.FC<OrderDrawerProps> = ({
                     </div>
 
                     {/* Bill Breakdown */}
+                    <div>
+                      <label className="mb-2 block text-xs font-jakarta font-semibold uppercase tracking-wider text-gray-400">Payment method</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[{ id: 'cash', label: orderType === 'delivery' ? 'Cash / COD' : 'Pay at counter' }, { id: 'upi', label: 'UPI' }, { id: 'card', label: 'Card' }].map((method) => <button key={method.id} type="button" onClick={() => setPaymentMethod(method.id as 'cash' | 'upi' | 'card')} className={`min-h-12 rounded-sm border px-1 text-[10px] font-bold ${paymentMethod === method.id ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#D4AF37]' : 'border-white/10 bg-black/40 text-gray-400'}`}>{method.label}</button>)}
+                      </div>
+                      {paymentMethod !== 'cash' && <p className="mt-2 text-[10px] text-gray-500">Online payment is marked pending until a payment gateway is connected.</p>}
+                    </div>
                     <div className="p-4 rounded-sm bg-black/60 border border-white/10 space-y-2 text-xs font-jakarta">
                       <div className="flex justify-between text-gray-400">
                         <span>Item Subtotal</span>
@@ -331,18 +382,21 @@ export const OrderDrawer: React.FC<OrderDrawerProps> = ({
                 <div className="p-6 border-t border-white/10 space-y-3 bg-[#121212]">
                   <button
                     onClick={handleWhatsAppOrder}
+                    disabled={isSaving}
                     className="w-full py-3.5 rounded-sm bg-[#25D366] hover:bg-[#20bd5a] text-black font-jakarta font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all active:scale-98"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Order via WhatsApp (Instant)</span>
+                    <span>{isSaving ? 'Saving order…' : 'Order via WhatsApp'}</span>
                   </button>
 
                   <button
                     onClick={handleInstantCheckout}
+                    disabled={isSaving}
                     className="w-full py-3 rounded-sm bg-[#D4AF37] hover:bg-[#e2bd44] text-black font-jakarta font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all active:scale-98"
                   >
-                    <span>Place Order (Pay at Counter / COD)</span>
+                    <span>{isSaving ? 'Saving order…' : user ? 'Place order' : 'Sign in to place order'}</span>
                   </button>
+                  {submitError && <p className="text-center text-[11px] text-red-300">{submitError}</p>}
                 </div>
               )}
             </motion.div>

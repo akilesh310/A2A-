@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { User } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
-import { Phone, UtensilsCrossed, Calendar, ShoppingBag, Menu as MenuIcon, X, MapPin } from 'lucide-react';
+import { Phone, UtensilsCrossed, Calendar, ShoppingBag, Menu as MenuIcon, X, MapPin, UserRound } from 'lucide-react';
 import { RESTAURANT_INFO } from '../data/restaurantData';
 
 interface NavbarProps {
   onOpenReservation: () => void;
   onOpenOrder: () => void;
   cartCount: number;
+  user: User | null;
+  onOpenAuth: () => void;
+  onOpenOrders: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenReservation, onOpenOrder, cartCount }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenReservation, onOpenOrder, cartCount, user, onOpenAuth, onOpenOrders }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -82,6 +86,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenReservation, onOpenOrder, 
 
           {/* Action CTAs */}
           <div className="hidden sm:flex items-center gap-3">
+            <button onClick={user ? onOpenOrders : onOpenAuth} className="flex items-center gap-1.5 px-3 py-2 text-xs text-white/80 hover:text-[#D4AF37]" title={user ? 'View your orders' : 'Sign in'}>
+              <UserRound className="h-4 w-4 text-[#D4AF37]" />
+              <span className="max-w-24 truncate">{user?.displayName?.split(' ')[0] || (user ? 'My Orders' : 'Sign in')}</span>
+            </button>
             {/* Phone Quick Dial */}
             <a
               href={`tel:${RESTAURANT_INFO.phone.replace(/[^0-9+]/g, '')}`}
