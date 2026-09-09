@@ -48,13 +48,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenReservation, onOpenOrder, 
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Logo Monogram Box */}
+          {/* Restaurant logo */}
           <a
             href="#"
             className="flex items-center gap-3.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-sm"
           >
-            <div className="w-10 h-10 border-2 border-[#D4AF37] flex items-center justify-center rounded-sm bg-black/40 group-hover:bg-[#D4AF37]/10 transition-colors shadow-sm shadow-[#D4AF37]/20">
-              <span className="font-cinzel text-xl font-bold text-[#D4AF37]">A</span>
+            <div className="w-24 h-12 overflow-hidden rounded-full border border-[#D4AF37]/70 bg-black shadow-sm shadow-[#D4AF37]/20">
+              <img src="/a2a-restaurant-logo.jpg" alt="A2A Restaurant" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
             </div>
             <div>
               <span

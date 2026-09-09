@@ -14,8 +14,8 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand & Identity (5 cols) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-sm border border-[#D4AF37] flex items-center justify-center bg-black/60">
-                <span className="font-cinzel text-lg font-bold text-[#D4AF37]">A</span>
+              <div className="w-32 h-16 overflow-hidden rounded-full border border-[#D4AF37]/70 bg-black">
+                <img src="/a2a-restaurant-logo.jpg" alt="A2A Restaurant" className="h-full w-full object-cover" />
               </div>
               <div>
                 <span className="font-cinzel text-2xl font-bold text-white tracking-widest block">
